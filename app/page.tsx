@@ -53,7 +53,7 @@ export default function Home() {
           )}
         </Card> */}
 
-        <Tabs defaultValue="gender" value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs defaultValue="gender" value={activeTab} onValueChange={setActiveTab} className="flex justify-center text-center items-center  w-full">
           {/* <TabsList className="grid w-full grid-cols-2 mb-8">
             <TabsTrigger value="gender" className="text-lg py-3">
               Noun Genders

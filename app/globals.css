@@ -87,3 +87,13 @@
   }
 }
 
+/* Add to your global CSS */
+.scroll-area {
+  scroll-behavior: smooth; /* Fallback for smooth scrolling */
+  -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+}
+
+.scroll-area .scroll-content {
+  display: inline-flex; /* Ensures proper layout of level items */
+  min-width: min-content; /* Prevents content from shrinking */
+}

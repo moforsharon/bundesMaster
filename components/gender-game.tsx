@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
+import { ButtonWithRipple } from "@/components/ui/button-with-ripple"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
@@ -9,6 +10,7 @@ import { Lightbulb, Trophy, RotateCcw, Lock, Download, ChevronRight } from 'luci
 import { useChat  } from "ai/react"
 import { useLocalStorage } from "@/hooks/use-local-storage"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
+import UserLoginModal from "@/components/user-login-modal"
 
 type WordStats = {
   correct: string[]
@@ -94,6 +96,85 @@ export default function GenderGame() {
   const [showLevelFailed, setShowLevelFailed] = useState(false)
   const levelSelectorRef = useRef<HTMLDivElement>(null);
 
+  // User login modal state
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [showLoginReturningUserModal, setLoginReturningUserModal] = useState(false)
+  const [userId, setUserId] = useLocalStorage<string | null>("userId", null)
+  const [giftLevelId, setGiftLevelId] = useState<number | null>(null)
+  const [showUserButton, setShowUserButton] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
+  
+    // Check for existing user on mount
+    useEffect(() => {
+      const checkExistingUser = async () => {
+        const storedUserId = localStorage.getItem("userId")
+        const existingName = localStorage.getItem("userName")
+  
+        if (storedUserId) {
+          setUserId(storedUserId)
+          setUserName(existingName)
+          await loadUserProgress(storedUserId)
+        } 
+        // else if (gameStarted) {
+        //   // If game is started and no user is found, show login modal
+        //   setShowLoginModal(true)
+        // }
+      }
+  
+      checkExistingUser()
+    }, [gameStarted, setUserId, setUserName])
+  
+    // Load user progress from server
+    const loadUserProgress = async (userId: string) => {
+      try {
+        //     // Ensure userId is properly encoded and not double-encoded
+        // const cleanUserId = userId.replace(/^"+|"+$/g, ''); // Remove any surrounding quotes
+        // const response = await fetch(`/api/progress?userId=${encodeURIComponent(cleanUserId)}`);
+        const response = await fetch(`/api/progress?userId=${userId}`)
+  
+        if (!response.ok) {
+          throw new Error("Failed to load progress")
+        }
+  
+        const data = await response.json()
+  
+        if (data.progress) {
+          setCurrentLevel(data.progress.currentLevel)
+          setLevels(data.progress.levels)
+          setLevelProgress(data.progress.levelProgress)
+  
+          toast({
+            title: "Progress loaded",
+            description: "Your saved progress has been loaded.",
+          })
+        }
+      } catch (error) {
+        console.error("Error loading progress:", error)
+      }
+    }
+  
+    // Save user progress to server
+    const saveUserProgress = async () => {
+      if (!userId) return
+  
+      try {
+        await fetch("/api/progress", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId,
+            currentLevel,
+            levels,
+            levelProgress,
+          }),
+        })
+      } catch (error) {
+        console.error("Error saving progress:", error)
+      }
+    }
+
   useEffect(() => {
     if (!levelSelectorRef.current || !gameStarted) return;
   
@@ -132,6 +213,13 @@ export default function GenderGame() {
     console.log(`selectedAnswer is : ${selectedAnswer}`)
   }, [selectedAnswer])
 
+    // Save progress whenever it changes
+    useEffect(() => {
+      if (userId && gameStarted) {
+        saveUserProgress()
+      }
+    }, [levels, currentLevel, levelProgress, userId, gameStarted])
+
   // In your component
 const { messages, append, setMessages, error } = useChat({
   api: "/api/gender-game",
@@ -162,6 +250,7 @@ const { messages, append, setMessages, error } = useChat({
 const startGame = async () => {
   gameStartedRef.current = true;
   setIsLoading(true);
+  setShowUserButton(true);
   
   try {
     console.log("Starting game...");
@@ -476,7 +565,38 @@ const startGame = async () => {
     }
   }
 
-  const claimGift = (levelId: number) => {
+  // const claimGift = (levelId: number) => {
+  //   // Mark gift as claimed
+  //   setLevels((prevLevels) =>
+  //     prevLevels.map((level) => {
+  //       if (level.id === levelId) {
+  //         return { ...level, giftClaimed: true }
+  //       }
+  //       return level
+  //     }),
+  //   )
+
+  //   // In a real app, you would trigger the PDF download here
+  //   // For this example, we'll just show a toast
+  //   toast({
+  //     title: "Gift Claimed!",
+  //     description: `You've downloaded the Level ${levelId} completion certificate.`,
+  //   })
+  // }
+
+  const handleClaimGift = (levelId: number) => {
+    // Check if user is logged in
+    if (!userId) {
+      // Set the level ID for the gift and show login modal
+      setGiftLevelId(levelId)
+      setShowLoginModal(true)
+    } else {
+      // User is already logged in, proceed with claiming gift
+      claimGift(levelId)
+    }
+  }
+
+  const claimGift = async (levelId: number) => {
     // Mark gift as claimed
     setLevels((prevLevels) =>
       prevLevels.map((level) => {
@@ -487,12 +607,55 @@ const startGame = async () => {
       }),
     )
 
-    // In a real app, you would trigger the PDF download here
-    // For this example, we'll just show a toast
-    toast({
-      title: "Gift Claimed!",
-      description: `You've downloaded the Level ${levelId} completion certificate.`,
-    })
+    try {
+      // Trigger PDF download
+      window.open(`/api/gifts/download?levelId=${levelId}`, "_blank")
+
+      // Save the claim to the server if user is logged in
+      if (userId) {
+        await fetch("/api/progress", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId,
+            currentLevel,
+            levels,
+            levelProgress,
+          }),
+        })
+      }
+
+      toast({
+        title: "Gift Claimed!",
+        description: `Your Level ${levelId} certificate is being downloaded.`,
+      })
+    } catch (error) {
+      console.error("Error claiming gift:", error)
+      toast({
+        title: "Download Error",
+        description: "Failed to download your gift. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Handle successful login/registration
+  const handleLoginSuccess = (newUserId: string, name?: string) => {
+    setUserId(newUserId)
+    if (name) setUserName(name);
+    setShowLoginModal(false)
+    setLoginReturningUserModal(false)
+
+    // If this was for claiming a gift, proceed with the claim
+    if (giftLevelId) {
+      claimGift(giftLevelId)
+      setGiftLevelId(null)
+    }
+
+    // Load user progress
+    loadUserProgress(newUserId)
   }
 
   // CHANGE: Added helper functions to get current level info
@@ -506,6 +669,29 @@ const startGame = async () => {
 
   return (
     <div className="flex justify-center text-center items-center">
+        {showUserButton && (
+          <div className="absolute top-4 right-4">
+            {userId ? (
+              <Button 
+              variant="outline" 
+              size="icon" 
+              className="rounded-full w-10 h-10 bg-blue-100 hover:bg-blue-200"
+            >
+              <span className="font-medium text-blue-800">
+                {userName ? userName.charAt(0).toUpperCase() : userId.charAt(0).toUpperCase()}
+              </span>
+            </Button>
+            ) : (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setLoginReturningUserModal(true)}
+              >
+                Login
+              </Button>
+            )}
+          </div>
+        )}
     <div className="space-y-0 md:space-y-6 flex flex-col max-w-11/12 md:max-w-full justify-center text-center items-center">
       {gameStarted && (
         <div className="w-3/4 md:w-full mb-4 px-40 md:px-8"> 
@@ -558,7 +744,7 @@ const startGame = async () => {
               <>
                 {error ? (
                   <div className="text-center py-8 space-y-4">
-                    <p className="text-red-500">Failed to connect to the AI service. {error?.toString()}</p>
+                    <p className="text-red-500">Failed to connect to the AI service.</p>
                     <p>Make sure your OpenAI API key is set up correctly.</p>
                     <Button onClick={startNewGame}>Try Again</Button>
                   </div>
@@ -573,12 +759,19 @@ const startGame = async () => {
 
                     {!getCurrentLevelConfig().giftClaimed && (
                       <Button
-                        onClick={() => claimGift(currentLevel)}
+                      onClick={() => handleClaimGift(currentLevel)}
                         className="bg-yellow-500 hover:bg-yellow-600 text-white"
                       >
                         <Download className="mr-2 h-4 w-4" />
                         Claim Your Gift
                       </Button>
+                    //   <ButtonWithRipple
+                    //     onClick={() => handleClaimGift(currentLevel)}
+                    //     className="flex items-center px-4 py-2"
+                    //   >
+                    //     <Download className="mr-2 h-4 w-4" />
+                    //     Claim Your Gift
+                    // </ButtonWithRipple>
                     )}
 
                     <div className="pt-4">
@@ -768,6 +961,23 @@ const startGame = async () => {
         </Card>
       </div>
     </div>
+    {/* User login modal */}
+    <UserLoginModal
+      isOpen={showLoginModal}
+      onClose={() => setShowLoginModal(false)}
+      onSuccess={handleLoginSuccess}
+      isNewUser={true}
+      levelId={giftLevelId || 0}
+      gameStats={{ levels, currentLevel, levelProgress }}
+    />
+    <UserLoginModal
+      isOpen={showLoginReturningUserModal}
+      onClose={() => setLoginReturningUserModal(false)}
+      onSuccess={handleLoginSuccess}
+      isNewUser={false}
+      levelId={giftLevelId || 0}
+      gameStats={{ levels, currentLevel, levelProgress }}
+    />
     </div>
   )
 }

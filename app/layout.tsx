@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata = {
   title: "German Language Learning",
   description: "Learn German noun genders and plurals with AI assistance",
-    generator: 'v0.dev'
+    generator: 'bundesmaster.com'
 }
 
 export default function RootLayout({

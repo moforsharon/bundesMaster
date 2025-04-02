@@ -52,7 +52,7 @@ export default function GenderGame() {
       id: 2,
       name: "Level 2",
       wordsRequired: 20,
-      correctRequired: 16,
+      correctRequired: 18,
       completed: false,
       unlocked: false,
       giftClaimed: false,
@@ -439,13 +439,39 @@ const startGame = async () => {
     startNewGame()
   }
 
+  // const selectLevel = (levelId: number) => {
+  //   if (levels.find((l) => l.id === levelId)?.unlocked) {
+  //     setCurrentLevel(levelId)
+  //     setLevelProgress((prev) => ({
+  //       ...prev,
+  //       [levelId]: prev[levelId] || { attempts: 0, correct: 0 },
+  //     }))
+  //     startNewGame()
+  //   }
+  // }
   const selectLevel = (levelId: number) => {
     if (levels.find((l) => l.id === levelId)?.unlocked) {
       setCurrentLevel(levelId)
-      setLevelProgress((prev) => ({
-        ...prev,
-        [levelId]: prev[levelId] || { attempts: 0, correct: 0 },
-      }))
+
+      // Check if the level is already completed
+      const isLevelCompleted = levels.find((l) => l.id === levelId)?.completed
+
+      // If the level is completed, reset its progress
+      if (isLevelCompleted) {
+        setLevelProgress((prev) => ({
+          ...prev,
+          [levelId]: { attempts: 0, correct: 0 },
+        }))
+      } else {
+        // Otherwise, keep existing progress or initialize new progress
+        setLevelProgress((prev) => ({
+          ...prev,
+          [levelId]: prev[levelId] || { attempts: 0, correct: 0 },
+        }))
+      }
+
+      setShowLevelComplete(false)
+      setShowLevelFailed(false)
       startNewGame()
     }
   }

@@ -744,9 +744,9 @@ const startGame = async () => {
               <>
                 {error ? (
                   <div className="text-center py-8 space-y-4">
-                    <p className="text-red-500">Failed to connect to the AI service.</p>
-                    <p>Make sure your OpenAI API key is set up correctly.</p>
-                    <Button onClick={startNewGame}>Try Again</Button>
+                    <p className="text-red-500">Something went wrong!</p>
+                    <p>Please make sure you are connected to the internet</p>
+                    <Button onClick={() => restartLevel()}>Try Again</Button>
                   </div>
                 ) : showLevelComplete ? (
                   /* CHANGE: Added level complete screen */

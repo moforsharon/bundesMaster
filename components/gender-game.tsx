@@ -44,8 +44,8 @@ export default function GenderGame() {
     {
       id: 1,
       name: "Level 1",
-      wordsRequired: 10,
-      correctRequired: 8,
+      wordsRequired: 1,
+      correctRequired: 1,
       completed: false,
       unlocked: true,
       giftClaimed: false,

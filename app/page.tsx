@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import GenderGame from "@/components/gender-game"
 import PluralGame from "@/components/plural-game"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
@@ -11,6 +12,8 @@ import { AlertCircle } from "lucide-react"
 export default function Home() {
   const [activeTab, setActiveTab] = useState("gender")
   const [apiKeyConfigured, setApiKeyConfigured] = useState<boolean | null>(null)
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     // Check if OpenAI API key is configured
@@ -27,6 +30,17 @@ export default function Home() {
 
     checkApiKey()
   }, [])
+
+  useEffect(() => {
+    // Check if user came from challenge link
+    const isChallenge = localStorage.getItem('isChallenge') === 'true'
+
+    if (isChallenge) {
+      console.log('User came from challenge:')
+      // You can now use this info throughout your app
+      router.push("/challenge?isChallenge=yes")
+    }
+  }, [router])
 
   return (
     <div className="flex min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 p-1 md:p-8 justify-center align-middle items-center overflow-hidden">

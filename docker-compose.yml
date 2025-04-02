@@ -13,3 +13,23 @@ services:
       - .env
     volumes:
       - /app/node_modules
+    depends_on:
+      - mysql_game_db
+
+  mysql_game_db:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: german_game
+      MYSQL_USER: root
+      MYSQL_PASSWORD: ''
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_game_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  mysql_game_data:

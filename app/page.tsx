@@ -1,19 +1,16 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState, useEffect, Suspense } from "react"
+import { Tabs, TabsContent } from "@/components/ui/tabs"
 import GenderGame from "@/components/gender-game"
 import PluralGame from "@/components/plural-game"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
+import { useRouter } from "next/navigation"
+import SearchParamsHandler from "@/components/search-params-handler"
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("gender")
   const [apiKeyConfigured, setApiKeyConfigured] = useState<boolean | null>(null)
   const router = useRouter()
-  const searchParams = useSearchParams()
 
   useEffect(() => {
     // Check if OpenAI API key is configured
@@ -33,10 +30,10 @@ export default function Home() {
 
   useEffect(() => {
     // Check if user came from challenge link
-    const isChallenge = localStorage.getItem('isChallenge') === 'true'
+    const isChallenge = localStorage.getItem("isChallenge") === "yes"
 
     if (isChallenge) {
-      console.log('User came from challenge:')
+      console.log("User came from challenge:")
       // You can now use this info throughout your app
       router.push("/challenge?isChallenge=yes")
     }
@@ -67,7 +64,12 @@ export default function Home() {
           )}
         </Card> */}
 
-        <Tabs defaultValue="gender" value={activeTab} onValueChange={setActiveTab} className="flex justify-center text-center items-center  w-full">
+        <Tabs
+          defaultValue="gender"
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="flex justify-center text-center items-center w-full"
+        >
           {/* <TabsList className="grid w-full grid-cols-2 mb-8">
             <TabsTrigger value="gender" className="text-lg py-3">
               Noun Genders
@@ -82,6 +84,11 @@ export default function Home() {
           <TabsContent value="plural">{activeTab === "plural" && <PluralGame />}</TabsContent>
         </Tabs>
       </div>
+
+      {/* Wrap the search params usage in a Suspense boundary */}
+      <Suspense fallback={null}>
+        <SearchParamsHandler />
+      </Suspense>
     </div>
   )
 }

@@ -10,7 +10,7 @@ import { Lightbulb, Trophy, RotateCcw, Lock, Download, ChevronRight } from 'luci
 import { useChat  } from "ai/react"
 import { useLocalStorage } from "@/hooks/use-local-storage"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
-import UserLoginModal from "@/components/user-login-modal"
+import ChallengeUserLoginModal from "./challenge-user-login-modal"
 
 type WordStats = {
   correct: string[]
@@ -28,11 +28,15 @@ type LevelConfig = {
   giftClaimed: boolean
 }
 
-export default function GenderGame() {
+interface PreTestChallengeProps {
+    setActiveStep?: (step: string) => void
+  }
+
+export default function PreTestChallenge({ setActiveStep }: PreTestChallengeProps) {
   const [currentWord, setCurrentWord] = useState<{ word: string; translation: string } | null>(null)
   const [showHint, setShowHint] = useState(false)
   const [stats, setStats] = useState<WordStats>({ correct: [], incorrect: [], hesitated: [] })
-  const [gameStarted, setGameStarted] = useState(false)
+  const [gameStarted, setGameStarted] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [isHintLoading, setIsHintLoading] = useState(false)
   const [hint, setHint] = useState("")
@@ -44,48 +48,12 @@ export default function GenderGame() {
     {
       id: 1,
       name: "Level 1",
-      wordsRequired: 10,
-      correctRequired: 8,
+      wordsRequired: 20,
+      correctRequired: 10,
       completed: false,
       unlocked: true,
       giftClaimed: false,
-    },
-    {
-      id: 2,
-      name: "Level 2",
-      wordsRequired: 20,
-      correctRequired: 18,
-      completed: false,
-      unlocked: false,
-      giftClaimed: false,
-    },
-    {
-      id: 3,
-      name: "Level 3",
-      wordsRequired: 30,
-      correctRequired: 25,
-      completed: false,
-      unlocked: false,
-      giftClaimed: false,
-    },
-    {
-      id: 4,
-      name: "Level 4",
-      wordsRequired: 40,
-      correctRequired: 35,
-      completed: false,
-      unlocked: false,
-      giftClaimed: false,
-    },
-    {
-      id: 5,
-      name: "Level 5",
-      wordsRequired: 50,
-      correctRequired: 45,
-      completed: false,
-      unlocked: false,
-      giftClaimed: false,
-    },
+    }
   ])
   const [currentLevel, setCurrentLevel] = useLocalStorage<number>("gender-game-current-level", 1)
   const [levelProgress, setLevelProgress] = useLocalStorage<Record<number, { attempts: number; correct: number }>>(
@@ -113,7 +81,7 @@ export default function GenderGame() {
         if (storedUserId) {
           setUserId(storedUserId)
           setUserName(existingName)
-          await loadUserProgress(storedUserId)
+        //   await loadUserProgress(storedUserId)
         } 
         // else if (gameStarted) {
         //   // If game is started and no user is found, show login modal
@@ -584,15 +552,10 @@ const startGame = async () => {
   //   })
   // }
 
-  const handleClaimGift = (levelId: number) => {
+  const handleStartChallenge = () => {
     // Check if user is logged in
     if (!userId) {
-      // Set the level ID for the gift and show login modal
-      setGiftLevelId(levelId)
       setShowLoginModal(true)
-    } else {
-      // User is already logged in, proceed with claiming gift
-      claimGift(levelId)
     }
   }
 
@@ -655,7 +618,7 @@ const startGame = async () => {
     }
 
     // Load user progress
-    loadUserProgress(newUserId)
+    // loadUserProgress(newUserId)
   }
 
   // CHANGE: Added helper functions to get current level info
@@ -692,55 +655,12 @@ const startGame = async () => {
             )}
           </div>
         )}
-    <div className="space-y-0 md:space-y-6 flex flex-col max-w-11/12 md:max-w-full justify-center text-center items-center">
-      {gameStarted && (
-        <div className="w-3/4 md:w-full mb-4 px-40 md:px-8"> 
-          <ScrollArea className="whitespace-nowrap" ref={levelSelectorRef}>
-            <div className="flex space-x-4 p-4">
-              {levels.map((level) => (
-                <div
-                  key={level.id}
-                  id={`level-${level.id}`}
-                  onClick={() => level.unlocked && selectLevel(level.id)}
-                  className={`
-                    flex items-center space-x-2 px-4 py-2 rounded-lg cursor-pointer transition-all
-                    ${
-                      level.id === currentLevel
-                        ? "bg-primary text-primary-foreground font-bold scale-110"
-                        : level.unlocked
-                          ? "bg-secondary hover:bg-secondary/80"
-                          : "bg-muted text-muted-foreground"
-                    }
-                    ${level.completed ? "border-2 border-green-500" : ""}
-                  `}
-                >
-                  <span>{level.name}</span>
-                  {!level.unlocked && <Lock className="h-4 w-4" />}
-                </div>
-              ))}
-            </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-        </div>
-      )}
+    {/* <div className="space-y-0 md:space-y-6 flex flex-col w-full justify-center text-center items-center"> */}
       <div className="justify-self-center overflow-hidden justify-center text-center items-center">
-        <Card className="shadow-lg w-full max-w-80 md:max-w-full">
-        {!gameStarted && <CardHeader>
-            <CardTitle className="text-2xl text-center">German Noun Gender Game</CardTitle>
-          </CardHeader>}
+        <Card className=" border-none shadow-none">
 
           <CardContent>
-            {!gameStarted ? (
-              <div className="text-center space-y-6 py-8">
-                {/* <h3 className="text-xl font-medium">Learn German Noun Genders</h3> */}
-                <p className="text-gray-600 text-center space-y-6 pt-2 pb-8 text-sm md:text-base">
-              Practice identifying whether German nouns are masculine (der), feminine (die), or neuter (das).
-            </p>
-                <Button size="lg" onClick={() => setGameStarted(true)} className="mt-4">
-                  Start Game
-                </Button>
-              </div>
-            ) : (
+
               <>
                 {error ? (
                   <div className="text-center py-8 space-y-4">
@@ -752,31 +672,13 @@ const startGame = async () => {
                   /* CHANGE: Added level complete screen */
                   <div className="space-y-6 py-8 text-center">
                     <Trophy className="h-16 w-16 text-yellow-500 mx-auto" />
-                    <h3 className="text-2xl font-bold text-green-700">Great! You crushed this level!</h3>
+                    <h3 className="text-2xl font-bold text-green-700">Great! You passed the Pre-test!</h3>
                     <p>
                       You got {getCurrentLevelProgress().correct} out of {getCurrentLevelConfig().wordsRequired} correct!
                     </p>
-
-                    {!getCurrentLevelConfig().giftClaimed && (
-                      <Button
-                      onClick={() => handleClaimGift(currentLevel)}
-                        className="bg-yellow-500 hover:bg-yellow-600 text-white"
-                      >
-                        <Download className="mr-2 h-4 w-4" />
-                        Claim Your Gift
-                      </Button>
-                    //   <ButtonWithRipple
-                    //     onClick={() => handleClaimGift(currentLevel)}
-                    //     className="flex items-center px-4 py-2"
-                    //   >
-                    //     <Download className="mr-2 h-4 w-4" />
-                    //     Claim Your Gift
-                    // </ButtonWithRipple>
-                    )}
-
                     <div className="pt-4">
-                      <Button onClick={moveToNextLevel} className="bg-green-600 hover:bg-green-700">
-                        Next Level <ChevronRight className="ml-2 h-4 w-4" />
+                      <Button onClick={() => handleStartChallenge()} className="bg-green-600 hover:bg-green-700">
+                        Start Challenge <ChevronRight className="ml-2 h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -939,7 +841,6 @@ const startGame = async () => {
                   </div>
                 )}
               </>
-            )}
           </CardContent>
 
           <CardFooter className="flex justify-between border-t pt-4">
@@ -960,23 +861,23 @@ const startGame = async () => {
           </CardFooter>
         </Card>
       </div>
-    </div>
+    {/* </div> */}
     {/* User login modal */}
-    <UserLoginModal
+    <ChallengeUserLoginModal
       isOpen={showLoginModal}
       onClose={() => setShowLoginModal(false)}
       onSuccess={handleLoginSuccess}
       isNewUser={true}
-      levelId={giftLevelId || 0}
-      gameStats={{ levels, currentLevel, levelProgress }}
+      challengeLevel={1}
+      setActiveStep={setActiveStep}
     />
-    <UserLoginModal
+    <ChallengeUserLoginModal
       isOpen={showLoginReturningUserModal}
       onClose={() => setLoginReturningUserModal(false)}
       onSuccess={handleLoginSuccess}
       isNewUser={false}
-      levelId={giftLevelId || 0}
-      gameStats={{ levels, currentLevel, levelProgress }}
+      challengeLevel={1}
+      setActiveStep={setActiveStep}
     />
     </div>
   )

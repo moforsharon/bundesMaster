@@ -132,11 +132,18 @@ export async function GET(req: NextRequest) {
 
     // Check if file exists (optional)
     // You might want to verify the file exists before redirecting
-    
-    // Redirect to the static file
+    // Determine the base URL based on environment
+    const baseUrl = process.env.NODE_ENV === 'production' 
+    ? 'https://bundesmaster.com' 
+    : 'http://localhost:3000';
+
     return NextResponse.redirect(
-      new URL(`/Identify-German-noun-genders-based.pdf`, req.url)
-    )
+    new URL(`/Identify-German-noun-genders-based.pdf`, baseUrl)
+    );
+    // Redirect to the static file
+    // return NextResponse.redirect(
+    //   new URL(`/Identify-German-noun-genders-based.pdf`, req.url)
+    // )
   } catch (error) {
     console.error("PDF serving error:", error)
     return NextResponse.json(

@@ -71,14 +71,58 @@ export default function PreTestChallenge({ setActiveStep }: PreTestChallengeProp
   const [giftLevelId, setGiftLevelId] = useState<number | null>(null)
   const [showUserButton, setShowUserButton] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
+
+    // Reset all game-related states on first navigation
+    useEffect(() => {
+        // Only preserve user-related data
+        const resetGameStates = () => {
+          // Reset game progress
+          setLevels([
+            {
+              id: 1,
+              name: "Level 1",
+              wordsRequired: 20,
+              correctRequired: 10,
+              completed: false,
+              unlocked: true,
+              giftClaimed: false,
+            }
+          ])
+          setCurrentLevel(1)
+          setLevelProgress({})
+          
+          // Reset game state
+          setStats({ correct: [], incorrect: [], hesitated: [] })
+          setCurrentWord(null)
+          setShowHint(false)
+          setHint("")
+          setCorrectAnswer("")
+          setLastAnswer(null)
+          setSelectedAnswer(null)
+          setShowLevelComplete(false)
+          setShowLevelFailed(false)
+          
+          // Reset messages from AI
+          setMessages([])
+          
+          // Set game as started to trigger the initial word fetch
+          gameStartedRef.current = false
+          setGameStarted(true)
+          
+          console.log("Game states have been reset")
+        }
+        
+        resetGameStates()
+      }, [])
   
     // Check for existing user on mount
     useEffect(() => {
       const checkExistingUser = async () => {
+        const participantId = localStorage.getItem("participantId")
         const storedUserId = localStorage.getItem("userId")
         const existingName = localStorage.getItem("userName")
   
-        if (storedUserId) {
+        if (participantId) {
           setUserId(storedUserId)
           setUserName(existingName)
         //   await loadUserProgress(storedUserId)

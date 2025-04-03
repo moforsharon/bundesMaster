@@ -1,22 +1,23 @@
 "use client"
 
-import { useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Trophy } from "lucide-react"
 
-export default function ChallengePage() {
+function ChallengeContent() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const isChallenge = searchParams.get("isChallenge") === "yes"
 
   useEffect(() => {
-    // If isChallenge is 'yes', store it in local storage
+    // Check URL params on client side
+    const params = new URLSearchParams(window.location.search)
+    const isChallenge = params.get("isChallenge") === "yes"
+    
     if (isChallenge) {
       localStorage.setItem("isChallenge", "yes")
     }
-  }, [isChallenge])
+  }, [])
 
   const startChallenge = () => {
     router.push("/")
@@ -55,3 +56,10 @@ export default function ChallengePage() {
   )
 }
 
+export default function ChallengePage() {
+  return (
+    <Suspense fallback={<div>Loading challenge...</div>}>
+      <ChallengeContent />
+    </Suspense>
+  )
+}

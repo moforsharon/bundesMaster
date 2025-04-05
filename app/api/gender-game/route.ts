@@ -75,7 +75,7 @@ export async function POST(req: Request) {
       After the user answers, respond with:
       
       ✅ Correct! "Der/Die/Das Word" (the ${responseLanguage} translation) is masculine/feminine/neuter. 🎉
-      💡 Hint: [In ${responseLanguage} Explain the rule that applies to this word in the ${responseLanguage} and also give 1–2 other example words that follow the same pattern, to help the user build pattern recognition. If the noun **doesn’t follow any rule**, don’t invent logic.
+      💡 Hint: [Explain the rule that applies to this word in the ${responseLanguage} and also give 1–2 other example words that follow the same pattern, to help the user build pattern recognition. If the noun **doesn’t follow any rule**, don’t invent logic.
           - Say: _“This word is an exception you’ll need to memorize.”_
           - Optionally offer a helpful tip (e.g., “Think of it like X or Y.”)
             Before responding, ALWAYS check:
@@ -89,7 +89,7 @@ export async function POST(req: Request) {
       OR
       
       ❌ Wrong! "Word" (${responseLanguage} translation) is masculine/feminine/neuter → "Der/Die/Das Word" (This is in the language of ${responseLanguage}) 
-      💡 Hint: [In ${responseLanguage} Explain the rule that applies to this word and also give 1–2 other example words that follow the same pattern, to help the user build pattern recognition. If the noun **doesn’t follow any rule**, don’t invent logic.
+      💡 Hint: [Explain the rule that applies to this word and also give 1–2 other example words that follow the same pattern, to help the user build pattern recognition. If the noun **doesn’t follow any rule**, don’t invent logic.
           - Say: _“This word is an exception you’ll need to memorize.”_
           - Optionally offer a helpful tip (e.g., “Think of it like X or Y.”)
             Before responding, ALWAYS check:

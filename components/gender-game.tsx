@@ -11,6 +11,10 @@ import { useChat  } from "ai/react"
 import { useLocalStorage } from "@/hooks/use-local-storage"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import UserLoginModal from "@/components/user-login-modal"
+import type { Dictionary } from "@/lib/dictionary"
+import type { Locale } from "@/i18n-config"
+import { i18n } from "@/i18n-config"
+import { getCookie, setCookie } from "cookies-next"
 
 type WordStats = {
   correct: string[]
@@ -28,7 +32,13 @@ type LevelConfig = {
   giftClaimed: boolean
 }
 
-export default function GenderGame() {
+export default function GenderGame({
+  lang,
+  dict,
+}: {
+  lang: Locale
+  dict: Dictionary
+}) {
   const [currentWord, setCurrentWord] = useState<{ word: string; translation: string } | null>(null)
   const [showHint, setShowHint] = useState(false)
   const [stats, setStats] = useState<WordStats>({ correct: [], incorrect: [], hesitated: [] })
@@ -103,6 +113,12 @@ export default function GenderGame() {
   const [giftLevelId, setGiftLevelId] = useState<number | null>(null)
   const [showUserButton, setShowUserButton] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
+  const [currentLocale, setCurrentLocale] = useState<string>("fr")
+
+  useEffect(() => {
+    const locale = (getCookie("NEXT_LOCALE") as string) || i18n.defaultLocale
+    setCurrentLocale(locale)
+  }, [currentLocale])
   
     // Check for existing user on mount
     useEffect(() => {
@@ -224,6 +240,9 @@ export default function GenderGame() {
 const { messages, append, setMessages, error } = useChat({
   api: "/api/gender-game",
   id: "gender-game",
+  body: {  // Add this body parameter
+    locale: currentLocale
+  },
   onFinish: (message) => {
     console.log("AI response received:", message.content);
     setIsLoading(false);
@@ -431,6 +450,9 @@ const startGame = async () => {
   const { messages: hintMessages, append: hintAppend } = useChat({
     api: "/api/hint",
     id: "hint",
+    body: {  // Add this body parameter
+      locale: currentLocale
+    },
     onFinish: (message) => {
       const hintContent = message.content
       setHint(hintContent)
@@ -687,7 +709,7 @@ const startGame = async () => {
                 size="sm"
                 onClick={() => setLoginReturningUserModal(true)}
               >
-                Login
+                {dict.game.login}
               </Button>
             )}
           </div>
@@ -726,7 +748,7 @@ const startGame = async () => {
       <div className="justify-self-center overflow-hidden justify-center text-center items-center">
         <Card className="shadow-lg w-full max-w-80 md:max-w-full">
         {!gameStarted && <CardHeader>
-            <CardTitle className="text-2xl text-center">German Noun Gender Game</CardTitle>
+            <CardTitle className="text-2xl text-center">{dict.home.title}</CardTitle>
           </CardHeader>}
 
           <CardContent>
@@ -734,10 +756,10 @@ const startGame = async () => {
               <div className="text-center space-y-6 py-8">
                 {/* <h3 className="text-xl font-medium">Learn German Noun Genders</h3> */}
                 <p className="text-gray-600 text-center space-y-6 pt-2 pb-8 text-sm md:text-base">
-              Practice identifying whether German nouns are masculine (der), feminine (die), or neuter (das).
+              {dict.home.practiceGenders}
             </p>
                 <Button size="lg" onClick={() => setGameStarted(true)} className="mt-4">
-                  Start Game
+                  {dict.home.startGame}
                 </Button>
               </div>
             ) : (
@@ -746,15 +768,17 @@ const startGame = async () => {
                   <div className="text-center py-8 space-y-4">
                     <p className="text-red-500">Something went wrong!</p>
                     <p>Please make sure you are connected to the internet</p>
-                    <Button onClick={() => restartLevel()}>Try Again</Button>
+                    <Button onClick={() => restartLevel()}>{dict.game.tryAgain}</Button>
                   </div>
                 ) : showLevelComplete ? (
                   /* CHANGE: Added level complete screen */
                   <div className="space-y-6 py-8 text-center">
                     <Trophy className="h-16 w-16 text-yellow-500 mx-auto" />
-                    <h3 className="text-2xl font-bold text-green-700">Great! You crushed this level!</h3>
+                    <h3 className="text-2xl font-bold text-green-700">{dict.game.levelComplete}</h3>
                     <p>
-                      You got {getCurrentLevelProgress().correct} out of {getCurrentLevelConfig().wordsRequired} correct!
+                    {dict.game.greatJob
+                      .replace('{correct}', getCurrentLevelProgress().correct.toString())
+                      .replace('{required}', getCurrentLevelConfig().wordsRequired.toString())}
                     </p>
 
                     {!getCurrentLevelConfig().giftClaimed && (
@@ -763,7 +787,7 @@ const startGame = async () => {
                         className="bg-yellow-500 hover:bg-yellow-600 text-white"
                       >
                         <Download className="mr-2 h-4 w-4" />
-                        Claim Your Gift
+                        {dict.game.claimGift}
                       </Button>
                     //   <ButtonWithRipple
                     //     onClick={() => handleClaimGift(currentLevel)}
@@ -776,21 +800,23 @@ const startGame = async () => {
 
                     <div className="pt-4">
                       <Button onClick={moveToNextLevel} className="bg-green-600 hover:bg-green-700">
-                        Next Level <ChevronRight className="ml-2 h-4 w-4" />
+                        {dict.game.nextLevel} <ChevronRight className="ml-2 h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                 ) : showLevelFailed ? (
                   /* CHANGE: Added level failed screen */
                   <div className="space-y-6 py-8 text-center">
-                    <h3 className="text-2xl font-bold text-red-600">Oops! You didn't pass this level.</h3>
+                    <h3 className="text-2xl font-bold text-red-600">{dict.game.levelFailed}</h3>
                     <p>
-                      You got {getCurrentLevelProgress().correct} out of {getCurrentLevelConfig().wordsRequired} correct,
-                      but you need at least {getCurrentLevelConfig().correctRequired} to pass.
+                    {dict.game.levelFailedDetails
+                      .replace('{correct}', getCurrentLevelProgress().correct.toString())
+                      .replace('{attempted}', getCurrentLevelConfig().wordsRequired.toString())
+                      .replace('{required}', getCurrentLevelConfig().correctRequired.toString())}
                     </p>
                     <Button onClick={restartLevel} className="bg-blue-600 hover:bg-blue-700">
                       <RotateCcw className="mr-2 h-4 w-4" />
-                      Try Again
+                      {dict.game.tryAgain}
                     </Button>
                   </div>
                 )
@@ -806,8 +832,8 @@ const startGame = async () => {
                       ></div>
                     </div>
                     <div className="text-center text-sm text-gray-500 -mt-6 mb-4">
-                      {getCurrentLevelProgress().attempts}/{getCurrentLevelConfig().wordsRequired} words •
-                      {getCurrentLevelProgress().correct}/{getCurrentLevelProgress().attempts || 1} correct
+                      {getCurrentLevelProgress().attempts}/{getCurrentLevelConfig().wordsRequired} {dict.game.words} •
+                      {getCurrentLevelProgress().correct}/{getCurrentLevelProgress().attempts || 1} {dict.game.correctAnswers}
                     </div>
 
                     <div className="text-center space-y-2">
@@ -817,7 +843,7 @@ const startGame = async () => {
 
                     {lastAnswer === null ? (
                         <div className="space-y-4">
-                          <p className="text-center font-medium">What is the gender?</p>
+                          <p className="text-center font-medium">{dict.game.whatIsGender}</p>
                           <div className="grid grid-cols-3 gap-3">
                             <Button
                               variant="outline"
@@ -880,7 +906,7 @@ const startGame = async () => {
                               className="text-amber-600"
                             >
                               <Lightbulb className="mr-2 h-4 w-4" />
-                              Hint
+                              {dict.game.hint}
                             </Button>
                           </div>
 
@@ -896,7 +922,7 @@ const startGame = async () => {
                                 ) : hint.startsWith("💡 Hint:") ? (
                                   hint
                                 ) : (
-                                  `💡 Hint: ${hint}`
+                                  `💡 ${dict.game.hint}: ${hint}`
                                 )}
                               </p>
                             </div>
@@ -915,19 +941,19 @@ const startGame = async () => {
                         >
                           <p className="text-sm md:text-lg font-medium">
                             {lastAnswer === "correct"
-                              ? "✅ Correct!"
-                              : `❌ Wrong! The correct answer is "${correctAnswer}"`}
+                              ? `✅ ${dict.game.correct}!`
+                              : `❌ ${dict.game.wrong}! The correct answer is "${correctAnswer}"`}
                           </p>
                           {hint && (
                             <p className="mt-2 text-sm">
-                              <span className="font-medium">Hint:</span> {hint}
+                              <span className="font-medium">{dict.game.hint}:</span> {hint}
                             </p>
                           )}
                         </div>
 
                         <div className="text-center mt-6">
                           <Button onClick={handleNextWord} disabled={isLoading}>
-                            Next Word
+                            {dict.game.nextWord}
                           </Button>
                         </div>
                       </div>
@@ -946,10 +972,10 @@ const startGame = async () => {
             <div className="flex space-x-2">
               <Badge variant="outline" className="bg-green-50">
                 <Trophy className="mr-1 h-3 w-3" />
-                {stats.correct.length} correct
+                {stats.correct.length} {dict.game.correct}
               </Badge>
               <Badge variant="outline" className="bg-red-50">
-                ❌ {stats.incorrect.length} wrong
+                ❌ {stats.incorrect.length} {dict.game.wrong}
               </Badge>
             </div>
 
@@ -969,6 +995,7 @@ const startGame = async () => {
       isNewUser={true}
       levelId={giftLevelId || 0}
       gameStats={{ levels, currentLevel, levelProgress }}
+      lang={lang} dict={dict}
     />
     <UserLoginModal
       isOpen={showLoginReturningUserModal}
@@ -977,6 +1004,7 @@ const startGame = async () => {
       isNewUser={false}
       levelId={giftLevelId || 0}
       gameStats={{ levels, currentLevel, levelProgress }}
+      lang={lang} dict={dict}
     />
     </div>
   )

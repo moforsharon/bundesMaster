@@ -11,6 +11,7 @@ export async function POST(req: Request) {
   
       // Extract the word - handle both direct word property and message content formats
       let word
+      let locale = 'en'
       if (body.word) {
         word = body.word
       } else if (body.messages && body.messages.length > 0) {
@@ -33,10 +34,15 @@ export async function POST(req: Request) {
         })
       }
   
+      if(body.locale) {
+        locale = body.locale
+      }
+
+      const responseLanguage = locale === 'fr' ? 'French' : 'English';
       console.log("Getting hint for word:", word)
   
       const systemPrompt = `
-        You are a German language coach helping students learn noun genders. When asked for a hint about a word's gender:
+        You are a German language coach helping students learn noun genders and respond in ${responseLanguage} but maintain the response format specified below. Do not translate the response format, just the content.. When asked for a hint about a word's gender:
         
         1. First check if the word follows any standard gender rules based on:
           - Word endings (e.g., -ung is feminine, -chen is neuter)
@@ -53,7 +59,7 @@ export async function POST(req: Request) {
           - Optionally provide a mnemonic or association tip
         
         Format your response like this:
-        💡 Hint: [Your hint here]
+        💡 Hint: [ in ${responseLanguage}, give your hint here]
         
         Current word: ${word}
       `

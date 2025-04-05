@@ -17,27 +17,9 @@ import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { Download, Loader2 } from "lucide-react"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import type { Dictionary } from "@/lib/dictionary"
+import type { Locale } from "@/i18n-config"
 
-// Define the form schema with validation
-const newUserSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  phone: z
-  .string()
-  .min(9, { message: "Please enter a valid phone number" })
-  .regex(/^(\+237|237)?[5-9]\d{8}$/, { message: "Please enter a valid Cameroon phone number" }),
-})
-
-const returningUserSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  phone: z
-    .string()
-    .min(9, { message: "Please enter a valid phone number" })
-    .regex(/^(\+237|237)?[5-9]\d{8}$/,  { message: "Please enter a valid phone number" }),
-})
-
-type NewUserFormValues = z.infer<typeof newUserSchema>
-type ReturningUserFormValues = z.infer<typeof returningUserSchema>
 
 interface UserLoginModalProps {
   isOpen: boolean
@@ -46,6 +28,8 @@ interface UserLoginModalProps {
   isNewUser: boolean
   levelId: number
   gameStats: any
+  lang: Locale
+  dict: Dictionary
 }
 
 export default function UserLoginModal({
@@ -55,7 +39,32 @@ export default function UserLoginModal({
   isNewUser,
   levelId,
   gameStats,
+  lang,
+  dict,
 }: UserLoginModalProps) {
+
+  // Define the form schema with validation
+const newUserSchema = z.object({
+  name: z.string().min(2, {  message: dict.errors.nameMinLength }),
+  email: z.string().email({ message: dict.errors.emailInvalid }),
+  phone: z
+  .string()
+  .min(9, { message: dict.errors.phoneInvalid })
+  .regex(/^(\+237|237)?[5-9]\d{8}$/, { message: dict.errors.phoneCameroon }),
+})
+
+const returningUserSchema = z.object({
+  email: z.string().email({ message: dict.errors.emailInvalid }),
+  phone: z
+    .string()
+    .min(9, { message: dict.errors.phoneInvalid })
+    .regex(/^(\+237|237)?[5-9]\d{8}$/,  { message: dict.errors.phoneCameroon }),
+})
+
+
+type NewUserFormValues = z.infer<typeof newUserSchema>
+type ReturningUserFormValues = z.infer<typeof returningUserSchema>
+
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
     // Add state to control which form is shown, initialized based on isNewUser
@@ -227,17 +236,150 @@ export default function UserLoginModal({
     }
   }
 
+  // return (
+  //   <Dialog open={isOpen} onOpenChange={onClose}>
+  //     <DialogContent className="max-w-[350px] md:max-w-[425px]">
+  //       <DialogHeader>
+  //         <DialogTitle>
+  //           {showNewUserForm ? `${dict.game.userRegistration.claimGiftTitle}` : `${dict.game.userRegistration.welcomeBackTitle}`}
+  //         </DialogTitle>
+  //         <DialogDescription>
+  //           {showNewUserForm
+  //             ?  `${dict.game.userRegistration.claimGiftDescription}`
+  //             : `${dict.game.userRegistration.welcomeBackDescription}`}
+  //         </DialogDescription>
+  //       </DialogHeader>
+
+  //       {showNewUserForm ? (
+  //         <Form {...newUserForm}>
+  //           <form onSubmit={newUserForm.handleSubmit(onNewUserSubmit)} className="space-y-4">
+  //             <FormField
+  //               control={newUserForm.control}
+  //               name="name"
+  //               render={({ field }) => (
+  //                 <FormItem>
+  //                   <FormLabel>Name</FormLabel>
+  //                   <FormControl>
+  //                     <Input placeholder="Your name" {...field} />
+  //                   </FormControl>
+  //                   <FormMessage />
+  //                 </FormItem>
+  //               )}
+  //             />
+
+  //             <FormField
+  //               control={newUserForm.control}
+  //               name="email"
+  //               render={({ field }) => (
+  //                 <FormItem>
+  //                   <FormLabel>Email</FormLabel>
+  //                   <FormControl>
+  //                     <Input type="email" placeholder="your.email@example.com" {...field} />
+  //                   </FormControl>
+  //                   <FormMessage />
+  //                 </FormItem>
+  //               )}
+  //             />
+
+  //             <FormField
+  //               control={newUserForm.control}
+  //               name="phone"
+  //               render={({ field }) => (
+  //                 <FormItem>
+  //                   <FormLabel>Phone Number</FormLabel>
+  //                   <FormControl>
+  //                     <Input placeholder="+237 " {...field} />
+  //                   </FormControl>
+  //                   <FormMessage />
+  //                 </FormItem>
+  //               )}
+  //             />
+
+  //             <DialogFooter>
+  //               <Button type="submit" disabled={isLoading} className="w-full">
+  //                 {isLoading ? (
+  //                   <>
+  //                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+  //                     Processing...
+  //                   </>
+  //                 ) : (
+  //                   <>
+  //                     <Download className="mr-2 h-4 w-4" />
+  //                     Get My Gift
+  //                   </>
+  //                 )}
+  //               </Button>
+  //             </DialogFooter>
+  //           </form>
+  //         </Form>
+  //       ) : (
+  //         <Form {...returningUserForm}>
+  //           <form onSubmit={returningUserForm.handleSubmit(onReturningUserSubmit)} className="space-y-4">
+  //             <FormField
+  //               control={returningUserForm.control}
+  //               name="email"
+  //               render={({ field }) => (
+  //                 <FormItem>
+  //                   <FormLabel>Email</FormLabel>
+  //                   <FormControl>
+  //                     <Input type="email" placeholder="your.email@example.com" {...field} />
+  //                   </FormControl>
+  //                   <FormMessage />
+  //                 </FormItem>
+  //               )}
+  //             />
+
+  //             <FormField
+  //               control={returningUserForm.control}
+  //               name="phone"
+  //               render={({ field }) => (
+  //                 <FormItem>
+  //                   <FormLabel>Phone Number</FormLabel>
+  //                   <FormControl>
+  //                     <Input placeholder="+237" {...field} />
+  //                   </FormControl>
+  //                   <FormMessage />
+  //                 </FormItem>
+  //               )}
+  //             />
+
+  //             <DialogFooter>
+  //               <Button type="submit" disabled={isLoading} className="w-full">
+  //                 {isLoading ? (
+  //                   <>
+  //                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+  //                     Loading...
+  //                   </>
+  //                 ) : (
+  //                   "Continue Learning"
+  //                 )}
+  //               </Button>
+  //             </DialogFooter>
+  //           </form>
+  //         </Form>
+  //       )}
+
+  //       <div className="text-center text-sm text-gray-500 mt-2">
+  //         <p>
+  //           {showNewUserForm
+  //             ? "Your information helps us personalize your learning experience and provide you with relevant German learning resources."
+  //             : "Welcome back! Your progress will be loaded automatically."}
+  //         </p>
+  //       </div>
+  //     </DialogContent>
+  //   </Dialog>
+  // )
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[350px] md:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {showNewUserForm ? "Claim Your Gift!" : "Welcome Back to German Learning!"}
+            {showNewUserForm ? dict.game.userRegistration.claimGiftTitle : dict.game.userRegistration.welcomeBackTitle}
           </DialogTitle>
           <DialogDescription>
             {showNewUserForm
-              ? "Enter your details to receive a personalized PDF on German noun genders and save your progress."
-              : "Enter your details to continue your German learning journey."}
+              ? dict.game.userRegistration.claimGiftDescription
+              : dict.game.userRegistration.welcomeBackDescription}
           </DialogDescription>
         </DialogHeader>
 
@@ -249,9 +391,12 @@ export default function UserLoginModal({
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>{dict.game.userRegistration.name}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Your name" {...field} />
+                      <Input 
+                        placeholder={dict.form.placeholders.name} 
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -263,9 +408,13 @@ export default function UserLoginModal({
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{dict.game.userRegistration.email}</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="your.email@example.com" {...field} />
+                      <Input 
+                        type="email" 
+                        placeholder={dict.form.placeholders.email} 
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -277,9 +426,12 @@ export default function UserLoginModal({
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
+                    <FormLabel>{dict.game.userRegistration.phone}</FormLabel>
                     <FormControl>
-                      <Input placeholder="+237 " {...field} />
+                      <Input 
+                        placeholder={dict.form.placeholders.phone} 
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -291,12 +443,12 @@ export default function UserLoginModal({
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
+                      {dict.game.userRegistration.processing}
                     </>
                   ) : (
                     <>
                       <Download className="mr-2 h-4 w-4" />
-                      Get My Gift
+                      {dict.game.userRegistration.getGift}
                     </>
                   )}
                 </Button>
@@ -311,9 +463,13 @@ export default function UserLoginModal({
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{dict.game.userRegistration.email}</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="your.email@example.com" {...field} />
+                      <Input 
+                        type="email" 
+                        placeholder={dict.form.placeholders.email} 
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -325,9 +481,12 @@ export default function UserLoginModal({
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
+                    <FormLabel>{dict.game.userRegistration.phone}</FormLabel>
                     <FormControl>
-                      <Input placeholder="+237" {...field} />
+                      <Input 
+                        placeholder={dict.form.placeholders.phone} 
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -339,10 +498,10 @@ export default function UserLoginModal({
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Loading...
+                      {dict.game.userRegistration.processing}
                     </>
                   ) : (
-                    "Continue Learning"
+                    dict.game.userRegistration.continueLearning
                   )}
                 </Button>
               </DialogFooter>
@@ -353,8 +512,8 @@ export default function UserLoginModal({
         <div className="text-center text-sm text-gray-500 mt-2">
           <p>
             {showNewUserForm
-              ? "Your information helps us personalize your learning experience and provide you with relevant German learning resources."
-              : "Welcome back! Your progress will be loaded automatically."}
+              ? dict.game.userRegistration.personalizationNote
+              : dict.game.userRegistration.welcomeBackNote}
           </p>
         </div>
       </DialogContent>

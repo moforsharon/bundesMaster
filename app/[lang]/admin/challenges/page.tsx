@@ -631,7 +631,7 @@ type User = {
   id: number
   name: string
   email: string
-  phone_number: string
+  phone: string
 }
 
 type ChallengeUser = {
@@ -870,7 +870,7 @@ export default function AdminInterface() {
     (user) =>
       user.name.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-      user.phone_number.includes(userSearchQuery),
+      user.phone.includes(userSearchQuery),
   )
 
   // Filter challenge users based on search query
@@ -963,7 +963,7 @@ export default function AdminInterface() {
                           <TableRow key={user.id}>
                             <TableCell>{user.name}</TableCell>
                             <TableCell>{user.email}</TableCell>
-                            <TableCell>{user.phone_number}</TableCell>
+                            <TableCell>{user.phone}</TableCell>
                           </TableRow>
                         ))
                       )}

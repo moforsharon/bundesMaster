@@ -69,6 +69,7 @@ type ReturningUserFormValues = z.infer<typeof returningUserSchema>
   const { toast } = useToast()
     // Add state to control which form is shown, initialized based on isNewUser
     const [showNewUserForm, setShowNewUserForm] = useState(isNewUser)
+    const [formError, setFormError] = useState<string | null>(null);
 
     // Reset form view when isNewUser changes
     useEffect(() => {
@@ -95,8 +96,62 @@ type ReturningUserFormValues = z.infer<typeof returningUserSchema>
   })
 
   // Handle new user registration
+  // const onNewUserSubmit = async (data: NewUserFormValues) => {
+  //   setIsLoading(true)
+  //   try {
+  //     const response = await fetch("/api/register", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         name: data.name,
+  //         email: data.email,
+  //         phone: data.phone,
+  //         levelId,
+  //         gameStats,
+  //       }),
+  //     })
+
+  //     const result = await response.json()
+
+  //     if (!response.ok) {
+  //       throw new Error(result.message || "Failed to register")
+  //     }
+
+  //     console.log("Saving userId: " + result.userId)
+
+  //     // Save user ID to local storage
+  //     localStorage.setItem("userId", result.userId)
+  //     localStorage.setItem("userName", data.name)
+      
+
+
+  //     // Download the PDF if this is for claiming a gift
+  //     if (levelId) {
+  //       downloadGift(levelId)
+  //     }
+
+  //     toast({
+  //       title: "Success!",
+  //       description: "Your information has been saved.",
+  //     })
+
+  //     onSuccess(result.userId, data.name);
+  //   } catch (error) {
+  //     console.error("Registration error:", error)
+  //     toast({
+  //       title: "Error",
+  //       description: error instanceof Error ? error.message : "Failed to register. Please try again.",
+  //       variant: "destructive",
+  //     })
+  //   } finally {
+  //     setIsLoading(false)
+  //   }
+  // }
   const onNewUserSubmit = async (data: NewUserFormValues) => {
     setIsLoading(true)
+    setFormError(null); 
     try {
       const response = await fetch("/api/register", {
         method: "POST",
@@ -111,47 +166,92 @@ type ReturningUserFormValues = z.infer<typeof returningUserSchema>
           gameStats,
         }),
       })
-
+  
       const result = await response.json()
-
+  
       if (!response.ok) {
+        // Handle "User already exists" case specifically
+        if (response.status === 409) {
+          setFormError(result.message || "This user already exists. Please login instead.");
+          return;
+        }
         throw new Error(result.message || "Failed to register")
       }
-
+  
       console.log("Saving userId: " + result.userId)
-
+  
       // Save user ID to local storage
       localStorage.setItem("userId", result.userId)
       localStorage.setItem("userName", data.name)
-      
-
-
+  
       // Download the PDF if this is for claiming a gift
       if (levelId) {
         downloadGift(levelId)
       }
-
+  
       toast({
         title: "Success!",
         description: "Your information has been saved.",
       })
-
+  
       onSuccess(result.userId, data.name);
     } catch (error) {
       console.error("Registration error:", error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to register. Please try again.",
-        variant: "destructive",
-      })
+      setFormError(
+        error instanceof Error ? error.message : "Failed to register. Please try again."
+      );
     } finally {
       setIsLoading(false)
     }
   }
 
   // Handle returning user login
+  // const onReturningUserSubmit = async (data: ReturningUserFormValues) => {
+  //   setIsLoading(true)
+  //   try {
+  //     const response = await fetch("/api/users/login", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         email: data.email,
+  //         phone: data.phone,
+  //         gameStats,
+  //       }),
+  //     })
+
+  //     const result = await response.json()
+
+  //     if (!response.ok) {
+  //       throw new Error(result.message || "Failed to login")
+  //     }
+
+  //     // Save user ID to local storage
+  //     localStorage.setItem("userId", result.userId)
+  //     localStorage.setItem("userName", result.userName || "")
+
+  //     toast({
+  //       title: "Welcome back!",
+  //       description: "Your progress has been loaded.",
+  //     })
+
+  //     onSuccess(result.userId, result.userName);
+  //   } catch (error) {
+  //     console.error("Login error:", error)
+  //     toast({
+  //       title: "Error",
+  //       description: error instanceof Error ? error.message : "Failed to login. Please try again.",
+  //       variant: "destructive",
+  //     })
+  //   } finally {
+  //     setIsLoading(false)
+  //   }
+  // }
+
   const onReturningUserSubmit = async (data: ReturningUserFormValues) => {
     setIsLoading(true)
+    setFormError(null);
     try {
       const response = await fetch("/api/users/login", {
         method: "POST",
@@ -164,30 +264,33 @@ type ReturningUserFormValues = z.infer<typeof returningUserSchema>
           gameStats,
         }),
       })
-
+  
       const result = await response.json()
-
+  
       if (!response.ok) {
+        // Handle "User not found" case specifically
+        if (response.status === 404) {
+          setFormError(result.message || "No account found with these details. Please register instead.");
+          return;
+        }
         throw new Error(result.message || "Failed to login")
       }
-
+  
       // Save user ID to local storage
       localStorage.setItem("userId", result.userId)
       localStorage.setItem("userName", result.userName || "")
-
+  
       toast({
         title: "Welcome back!",
         description: "Your progress has been loaded.",
       })
-
+  
       onSuccess(result.userId, result.userName);
     } catch (error) {
       console.error("Login error:", error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to login. Please try again.",
-        variant: "destructive",
-      })
+      setFormError(
+        error instanceof Error ? error.message : "Failed to login. Please try again."
+      );
     } finally {
       setIsLoading(false)
     }
@@ -228,11 +331,7 @@ type ReturningUserFormValues = z.infer<typeof returningUserSchema>
       window.open(url, "_blank")
     } catch (error) {
       console.error("Download error:", error)
-      toast({
-        title: "Download Error",
-        description: "Failed to download your gift. Please try again.",
-        variant: "destructive",
-      })
+      setFormError("Failed to download your gift. Please try again.");
     }
   }
 
@@ -382,6 +481,20 @@ type ReturningUserFormValues = z.infer<typeof returningUserSchema>
               : dict.game.userRegistration.welcomeBackDescription}
           </DialogDescription>
         </DialogHeader>
+
+          {/* Error message display */}
+        {formError && (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                {/* You can add an icon here if you want */}
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">{formError}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {showNewUserForm ? (
           <Form {...newUserForm}>

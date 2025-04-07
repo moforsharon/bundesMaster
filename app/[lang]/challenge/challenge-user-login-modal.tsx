@@ -428,6 +428,7 @@ export default function UserLoginModal({
 
   // Add state to control which form is shown, initialized based on isNewUser
   const [showNewUserForm, setShowNewUserForm] = useState(isNewUser)
+  const [formError, setFormError] = useState<string | null>(null)
 
   // Reset form view when isNewUser changes
   useEffect(() => {
@@ -452,121 +453,234 @@ export default function UserLoginModal({
     },
   })
 
-  // Handle new user registration
-  const onNewUserSubmit = async (data: NewUserFormValues) => {
-    setIsLoading(true)
-    try {
-      const response = await fetch("/api/challenge-users/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          challengeLevel,
-        }),
-      })
+  // // Handle new user registration
+  // const onNewUserSubmit = async (data: NewUserFormValues) => {
+  //   setIsLoading(true)
+  //   try {
+  //     const response = await fetch("/api/challenge-users/register", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         name: data.name,
+  //         email: data.email,
+  //         phone: data.phone,
+  //         challengeLevel,
+  //       }),
+  //     })
 
-      const result = await response.json()
+  //     const result = await response.json()
 
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to register for challenge")
+  //     if (!response.ok) {
+  //       throw new Error(result.message || "Failed to register for challenge")
+  //     }
+
+  //     // Save user data to local storage
+  //     localStorage.setItem("userId", result.user.id)
+  //     localStorage.setItem("userName", result.user.name)
+  //     localStorage.setItem("challengeLevel", result.challengeInfo.challengeLevel)
+  //     localStorage.setItem("participantId", result.challengeInfo.participantId)
+
+  //     toast({
+  //       title: "Challenge Registration Successful!",
+  //       description: "You've been registered for the challenge.",
+  //     })
+
+  //     // Call onSuccess with all the challenge data
+  //     onSuccess(result.user.id, result.user.name, {
+  //       challengeInfo: result.challengeInfo,
+  //       progress: result.progress,
+  //     })
+
+  //     // Redirect to challenge page
+  //     // Redirect to challenge page
+  //     if (setActiveStep) {
+  //       setActiveStep("challenge")
+  //     } else {
+  //       router.push(`/challenges/level-${result.challengeInfo.challengeLevel}`)
+  //     }
+  //   } catch (error) {
+  //     console.error("Registration error:", error)
+  //     toast({
+  //       title: "Error",
+  //       description: error instanceof Error ? error.message : dict?.errors.registrationFailed,
+  //       variant: "destructive",
+  //     })
+  //   } finally {
+  //     setIsLoading(false)
+  //   }
+  // }
+
+  // // Handle returning user login
+  // const onReturningUserSubmit = async (data: ReturningUserFormValues) => {
+  //   setIsLoading(true)
+  //   try {
+  //     const response = await fetch("/api/challenge-users/login", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         email: data.email,
+  //         phone: data.phone,
+  //       }),
+  //     })
+
+  //     const result = await response.json()
+
+  //     if (!response.ok) {
+  //       throw new Error(result.message || "Failed to login to challenge")
+  //     }
+
+  //     // Save user data to local storage
+  //     localStorage.setItem("userId", result.user.id)
+  //     localStorage.setItem("userName", result.user.name)
+  //     localStorage.setItem("challengeLevel", result.challengeInfo.challengeLevel)
+  //     localStorage.setItem("participantId", result.challengeInfo.participantId)
+
+  //     toast({
+  //       title: "Welcome back!",
+  //       description: "Your challenge progress has been loaded.",
+  //     })
+
+  //     // Call onSuccess with all the challenge data
+  //     onSuccess(result.user.id, result.user.name, {
+  //       challengeInfo: result.challengeInfo,
+  //       progress: result.progress,
+  //     })
+
+  //     // Redirect to challenge page
+  //     if (setActiveStep) {
+  //       setActiveStep("challenge")
+  //     } else {
+  //       router.push(`/challenges/level-${result.challengeInfo.challengeLevel}`)
+  //     }
+  //     returningUserForm.reset()
+  //   } catch (error) {
+  //     console.error("Login error:", error)
+  //     toast({
+  //       title: "Error",
+  //       description: error instanceof Error ? error.message : dict?.errors.loginFailed,
+  //       variant: "destructive",
+  //     })
+  //   } finally {
+  //     setIsLoading(false)
+  //   }
+  // }
+
+    // Handle new user registration
+    const onNewUserSubmit = async (data: NewUserFormValues) => {
+      setIsLoading(true)
+      setFormError(null)
+      
+      try {
+        const response = await fetch("/api/challenge-users/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            challengeLevel,
+          }),
+        })
+  
+        const result = await response.json()
+  
+        if (!response.ok) {
+          // Handle specific error cases
+          if (response.status === 409) {
+            setFormError(result.message || "User already exist!")
+            return
+          }
+          throw new Error(result.message || dict?.errors.registrationFailed)
+        }
+  
+        // Save user data
+        localStorage.setItem("userId", result.user.id)
+        localStorage.setItem("userName", result.user.name)
+        localStorage.setItem("challengeLevel", result.challengeInfo.challengeLevel)
+        localStorage.setItem("participantId", result.challengeInfo.participantId)
+  
+        // Call success handler
+        onSuccess(result.user.id, result.user.name, {
+          challengeInfo: result.challengeInfo,
+          progress: result.progress,
+        })
+  
+        // Redirect
+        if (setActiveStep) {
+          setActiveStep("challenge")
+        } else {
+          router.push(`/challenges/level-${result.challengeInfo.challengeLevel}`)
+        }
+      } catch (error) {
+        console.error("Registration error:", error)
+        setFormError(
+          error instanceof Error ? error.message : "Failed to register. Please try again!"
+        )
+      } finally {
+        setIsLoading(false)
       }
-
-      // Save user data to local storage
-      localStorage.setItem("userId", result.user.id)
-      localStorage.setItem("userName", result.user.name)
-      localStorage.setItem("challengeLevel", result.challengeInfo.challengeLevel)
-      localStorage.setItem("participantId", result.challengeInfo.participantId)
-
-      toast({
-        title: "Challenge Registration Successful!",
-        description: "You've been registered for the challenge.",
-      })
-
-      // Call onSuccess with all the challenge data
-      onSuccess(result.user.id, result.user.name, {
-        challengeInfo: result.challengeInfo,
-        progress: result.progress,
-      })
-
-      // Redirect to challenge page
-      // Redirect to challenge page
-      if (setActiveStep) {
-        setActiveStep("challenge")
-      } else {
-        router.push(`/challenges/level-${result.challengeInfo.challengeLevel}`)
-      }
-    } catch (error) {
-      console.error("Registration error:", error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : dict?.errors.registrationFailed,
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
     }
-  }
-
-  // Handle returning user login
-  const onReturningUserSubmit = async (data: ReturningUserFormValues) => {
-    setIsLoading(true)
-    try {
-      const response = await fetch("/api/challenge-users/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: data.email,
-          phone: data.phone,
-        }),
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to login to challenge")
+  
+    // Handle returning user login
+    const onReturningUserSubmit = async (data: ReturningUserFormValues) => {
+      setIsLoading(true)
+      setFormError(null)
+      
+      try {
+        const response = await fetch("/api/challenge-users/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: data.email, phone: data.phone }),
+        })
+  
+        const result = await response.json()
+  
+        if (!response.ok) {
+          // Handle specific error cases
+          if (response.status === 404) {
+            setFormError(result.message || "User not found. Please verify your email and phone number!")
+            return
+          }
+          if (response.status === 403) {
+            setFormError(result.message || "User not registered for challenge!")
+            return
+          }
+          throw new Error(result.message || "Failed to login. Please try agian!")
+        }
+  
+        // Save user data
+        localStorage.setItem("userId", result.user.id)
+        localStorage.setItem("userName", result.user.name)
+        localStorage.setItem("challengeLevel", result.challengeInfo.challengeLevel)
+        localStorage.setItem("participantId", result.challengeInfo.participantId)
+  
+        // Call success handler
+        onSuccess(result.user.id, result.user.name, {
+          challengeInfo: result.challengeInfo,
+          progress: result.progress,
+        })
+  
+        // Redirect
+        if (setActiveStep) {
+          setActiveStep("challenge")
+        } else {
+          router.push(`/challenges/level-${result.challengeInfo.challengeLevel}`)
+        }
+        
+        returningUserForm.reset()
+      } catch (error) {
+        console.error("Login error:", error)
+        setFormError(
+          error instanceof Error ? error.message : "Failed to login. Please try agian!"
+        )
+      } finally {
+        setIsLoading(false)
       }
-
-      // Save user data to local storage
-      localStorage.setItem("userId", result.user.id)
-      localStorage.setItem("userName", result.user.name)
-      localStorage.setItem("challengeLevel", result.challengeInfo.challengeLevel)
-      localStorage.setItem("participantId", result.challengeInfo.participantId)
-
-      toast({
-        title: "Welcome back!",
-        description: "Your challenge progress has been loaded.",
-      })
-
-      // Call onSuccess with all the challenge data
-      onSuccess(result.user.id, result.user.name, {
-        challengeInfo: result.challengeInfo,
-        progress: result.progress,
-      })
-
-      // Redirect to challenge page
-      if (setActiveStep) {
-        setActiveStep("challenge")
-      } else {
-        router.push(`/challenges/level-${result.challengeInfo.challengeLevel}`)
-      }
-      returningUserForm.reset()
-    } catch (error) {
-      console.error("Login error:", error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : dict?.errors.loginFailed,
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
     }
-  }
 
   return (
     <Dialog
@@ -585,6 +699,17 @@ export default function UserLoginModal({
             {showNewUserForm ? dict?.login.registerDescription : dict?.login.loginDescription}
           </DialogDescription>
         </DialogHeader>
+
+        {/* Error message display */}
+        {formError && (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+            <div className="flex">
+              <div className="ml-3">
+                <p className="text-sm text-red-700">{formError}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {showNewUserForm ? (
           <Form {...newUserForm}>

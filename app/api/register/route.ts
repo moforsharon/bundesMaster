@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     const existingUser = await db.query("SELECT * FROM users WHERE email = ? OR phone = ?", [email, phone]) as User[];
 
     if (existingUser.length > 0) {
-      return NextResponse.json({ message: "User already exists", userId: existingUser[0].id }, { status: 200 });
+      return NextResponse.json({ message: "User already exists", userId: existingUser[0].id }, { status: 409 });
     }
 
     // Create new user

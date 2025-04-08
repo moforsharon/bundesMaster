@@ -20,10 +20,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
 
-  useEffect(() => {
-    // Initialize cron jobs when the app starts
-    fetch('/api/setup-crons');
-  }, []);
+  // useEffect(() => {
+  //   // Initialize cron jobs when the app starts
+  //   fetch('/api/setup-crons');
+  // }, []);
 
 
   return (

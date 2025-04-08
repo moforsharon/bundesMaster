@@ -135,10 +135,56 @@ export type Dictionary = {
 }
 
 // Define dictionaries for each locale
+// const dictionaries = {
+//   en: () => import("@/dictionaries/en.json").then((module) => module.default as Dictionary),
+//   fr: () => import("@/dictionaries/fr.json").then((module) => module.default as Dictionary),
+// }
+
+// export const getDictionary = async (locale: Locale) => dictionaries[locale]()
+
 const dictionaries = {
-  en: () => import("@/dictionaries/en.json").then((module) => module.default as Dictionary),
-  fr: () => import("@/dictionaries/fr.json").then((module) => module.default as Dictionary),
+  en: () => import("@/dictionaries/en.json").then((module) => module.default),
+  fr: () => import("@/dictionaries/fr.json").then((module) => module.default),
 }
 
-export const getDictionary = async (locale: Locale) => dictionaries[locale]()
+// export const getDictionary = async (locale: Locale) => {
+//   // Validate locale exists
+//   if (!(locale in dictionaries)) {
+//     throw new Error(`Locale ${locale} not found in dictionaries`)
+//   }
 
+//   try {
+//     const dictionary = await dictionaries[locale]()
+//     return dictionary
+//   } catch (error) {
+//     console.error(`Failed to load dictionary for locale ${locale}:`, error)
+//     throw new Error(`Failed to load dictionary for locale ${locale}`)
+//   }
+// }
+
+export const getDictionary = async (locale: Locale) => {
+  // Validate locale is a valid locale string before proceeding
+  if (!locale || typeof locale !== "string") {
+    console.error(`Invalid locale provided: ${locale}`)
+    // Fallback to default locale
+    locale = "en" as Locale
+  }
+
+  // Validate locale exists in dictionaries
+  if (!(locale in dictionaries)) {
+    console.error(`Locale ${locale} not found in dictionaries, falling back to en`)
+    locale = "en" as Locale
+  }
+
+  try {
+    const dictionary = await dictionaries[locale]()
+    return dictionary
+  } catch (error) {
+    console.error(`Failed to load dictionary for locale ${locale}:`, error)
+    // Fallback to English dictionary instead of throwing
+    if (locale !== "en") {
+      return dictionaries["en"]()
+    }
+    throw new Error(`Failed to load dictionary for locale ${locale}`)
+  }
+}

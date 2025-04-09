@@ -10,7 +10,8 @@ export async function GET() {
         cu.name, 
         cu.email, 
         cu.phone, 
-        cp.final_score
+        cp.final_score,
+        cp.time_in_seconds
       FROM 
         challange_users cu
       LEFT JOIN 

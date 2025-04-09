@@ -4,7 +4,7 @@ import { db } from "@/lib/db"
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { participantId, score, totalQuestions } = body
+    const { participantId, score, totalQuestions, timeInSeconds } = body
 
     if (!participantId || score === undefined) {
       return NextResponse.json(
@@ -16,9 +16,9 @@ export async function POST(req: NextRequest) {
     // Update participant's score
     await db.query(
       `UPDATE challenge_participants 
-       SET final_score = ?
+       SET final_score = ?, time_in_seconds = ?
        WHERE id = ?`,
-      [score, participantId]
+      [score, timeInSeconds || null, participantId],
     )
 
     // Get participant's position

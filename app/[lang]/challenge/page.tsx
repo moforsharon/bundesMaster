@@ -13,6 +13,7 @@ import ChallengeDetails from "@/components/challenge-details"
 import { useLocalStorage } from "@/hooks/use-local-storage"
 import PracticeGame from "./practiceTest"
 import { useDictionary } from "@/hooks/use-dictionary"
+import PrizeDisplay from "@/components/prize-display"
 
 interface Challenge {
   id: number
@@ -46,6 +47,7 @@ export default function ChallengePage() {
   const [userName, setUserName] = useState<string | null>(null)
   const [storedUserId, setStoredUserId] = useState<string | null>(null)
   const [challengeLevel, setChallengeLevel] = useState<string | null>(null)
+  const [checkForOngoingChallenge, setCheckForOngoingChallenge] = useState<boolean>(true)
 
   const { dict } = useDictionary()
 
@@ -104,6 +106,7 @@ export default function ChallengePage() {
 
         // Determine challenge status based on time
         updateChallengeStatus(data.startTime, data.endTime)
+        setCheckForOngoingChallenge(false)
       } catch (err) {
         console.error("Error fetching challenge:", err)
         setError(err instanceof Error ? err.message : "An error occurred")
@@ -112,7 +115,7 @@ export default function ChallengePage() {
     }
 
     fetchChallenge()
-  }, [])
+  }, [checkForOngoingChallenge])
 
   // Function to update challenge status based on time
   const updateChallengeStatus = (startTimeStr: string, endTimeStr: string) => {
@@ -129,19 +132,19 @@ export default function ChallengePage() {
     }
   }
 
-  // Set up interval to check challenge status
+  //Set up interval to check challenge status
   useEffect(() => {
     if (!challenge) return
 
     // Update status immediately
     updateChallengeStatus(challenge.startTime, challenge.endTime)
 
-    // Set interval to check status every minute
-    const intervalId = setInterval(() => {
-      updateChallengeStatus(challenge.startTime, challenge.endTime)
-    }, 60000) // Check every minute
+    // // Set interval to check status every minute
+    // const intervalId = setInterval(() => {
+    //   updateChallengeStatus(challenge.startTime, challenge.endTime)
+    // }, 60000) // Check every minute
 
-    return () => clearInterval(intervalId)
+    // return () => clearInterval(intervalId)
   }, [challenge])
 
   const startChallenge = () => {
@@ -356,6 +359,7 @@ export default function ChallengePage() {
             className={`flex flex-col items-center cursor-pointer p-2 rounded-lg transition-colors ${activeStep === "challenge" ? "bg-blue-100" : "hover:bg-blue-50"}`}
             onClick={() => {
               if (storedUserId) {
+                setCheckForOngoingChallenge(true)
                 setActiveStep("challenge");
               } else {
                 console.error("User ID is not stored");
@@ -432,16 +436,19 @@ export default function ChallengePage() {
           {activeStep === "challenge" && <div className="text-center py-4">{renderChallengeContent()}</div>}
 
           {activeStep === "prizes" && (
-            <div className="text-center py-8">
-              {challenge && (
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                  <h4 className="font-medium text-blue-700 flex items-center justify-center">
-                    <Award className="mr-2 h-5 w-5" />
-                    {dict?.challenge.prizes}
-                  </h4>
-                  <p className="text-gray-700 mt-2">{challenge.rewards}</p>
-                </div>
-              )}
+            // <div className="text-center py-8">
+            //   {challenge && (
+            //     <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+            //       <h4 className="font-medium text-blue-700 flex items-center justify-center">
+            //         <Award className="mr-2 h-5 w-5" />
+            //         {dict?.challenge.prizes}
+            //       </h4>
+            //       <p className="text-gray-700 mt-2">{challenge.rewards}</p>
+            //     </div>
+            //   )}
+            // </div>
+            <div className="text-center py-4">
+              <PrizeDisplay participantId={storedUserId} challenge={challenge} />
             </div>
           )}
         </CardContent>

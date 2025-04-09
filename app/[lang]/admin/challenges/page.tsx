@@ -640,6 +640,7 @@ type ChallengeUser = {
   email: string
   phone: string
   final_score?: number
+  time_in_seconds?: number
 }
 
 export default function AdminInterface() {
@@ -998,6 +999,7 @@ export default function AdminInterface() {
                         <TableHead>Email</TableHead>
                         <TableHead>Phone Number</TableHead>
                         <TableHead>Final Score</TableHead>
+                        <TableHead>Completion Time (in seconds)</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1022,6 +1024,7 @@ export default function AdminInterface() {
                             <TableCell>{user.email}</TableCell>
                             <TableCell>{user.phone}</TableCell>
                             <TableCell>{user.final_score !== undefined ? user.final_score : "N/A"}</TableCell>
+                            <TableCell>{user.time_in_seconds !== undefined ? user.time_in_seconds : "N/A"}s</TableCell>
                           </TableRow>
                         ))
                       )}

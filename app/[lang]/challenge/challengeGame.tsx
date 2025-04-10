@@ -622,7 +622,11 @@ type WordStats = {
   incorrect: string[]
 }
 
-export default function ChallengeGame() {
+interface PreTestChallengeProps {
+  setActiveStep?: (step: string) => void
+}
+
+export default function ChallengeGame({ setActiveStep }: PreTestChallengeProps) {
   // Game state
   const [currentRound, setCurrentRound] = useState(0)
   const [currentWordIndex, setCurrentWordIndex] = useState(0)
@@ -843,15 +847,15 @@ export default function ChallengeGame() {
                   {`Completion time: ${finalStats.timeElapsed}`}
               </p>
             </div>
-{/* 
-            <Button onClick={restartChallenge} className="mt-4">
-              {dict?.challenge?.tryAgain || "Try Again"}
-            </Button> */}
-            <p className="flex items-center justify-center text-gray-600">
+
+            <Button onClick={() => setActiveStep && setActiveStep("prizes")} className="mt-4">
+            {currentLocale === "fr" ? "Aller aux prix" : "Go to Prizes"}
+            </Button>
+            {/* <p className="flex items-center justify-center text-gray-600">
               {/* <Clock className="h-4 w-4 mr-2" /> */}
               {/* {dict?.challenge?.completionTime?.replace("{time}", finalStats.timeElapsed) || */}
-                Go to Prizes to see your ranking
-            </p>
+              {/* {currentLocale === "fr" ? "Aller aux prix pour voir votre classement" : "Go to Prizes to see your ranking"} */}
+            {/* </p> */} 
           </div>
         )}
       </div>

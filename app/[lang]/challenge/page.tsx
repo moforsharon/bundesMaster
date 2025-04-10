@@ -177,7 +177,7 @@ export default function ChallengePage() {
         )
 
       case ChallengeStatus.ACTIVE:
-        return <ChallengeGame />
+        return <ChallengeGame setActiveStep={setActiveStep} />
 
       case ChallengeStatus.ENDED:
         return <ChallengeEnded challengeTitle={challenge.title} />
